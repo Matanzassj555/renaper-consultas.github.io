@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ced4da;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .last-login {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sección de inicio de sesión del administrador -->
+        <div id="adminLoginSection">
+            <h1> 🔒 INICIO DE SESIÓN ADMINISTRADOR 🔒</h1>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUsuario">Usuario:</label>
+                    <input type="text" id="adminUsuario" name="adminUsuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminContrasena">Contraseña:</label>
+                    <input type="password" id="adminContrasena" name="adminContrasena" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+                <div class="error" id="adminLoginError"></div>
+            </form>
+        </div>
+
+        <!-- Panel de administración -->
+        <div id="adminPanelSection" class="hidden">
+            <h1>Panel de Administración</h1>
+
+            <!-- Mostrar la última fecha de acceso -->
+            <div class="last-login">
+                <h2>Último Acceso del Administrador</h2>
+                <p id="lastLogin">Cargando...</p>
+            </div>
+
+            <!-- Formulario para añadir usuarios -->
+            <div id="addUserSection">
+                <h2>Agregar Usuario</h2>
+                <form id="addUserForm">
+                    <div class="form-group">
+                        <label for="newAdminUsuario">Usuario:</label>
+                        <input type="text" id="newAdminUsuario" name="newAdminUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAdminContrasena">Contraseña:</label>
+                        <input type="password" id="newAdminContrasena" name="newAdminContrasena" required>
+                    </div>
+                    <button type="submit">Agregar Usuario</button>
+                    <div class="error" id="addUserError"></div>
+                </form>
+            </div>
+
+            <!-- Tabla de usuarios -->
+            <div id="userTableSection">
+                <h2>Usuarios Registrados</h2>
+                <table id="userTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Contraseña</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Filas de usuarios serán añadidas aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Formulario para cambiar contraseña -->
+            <div id="changePasswordSection">
+                <h2>Cambiar Contraseña</h2>
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label for="changeUsuario">Usuario:</label>
+                        <input type="text" id="changeUsuario" name="changeUsuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña:</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                    </div>
+                    <button type="submit">Cambiar Contraseña</button>
+                    <div class="error" id="changePasswordError"></div>
+                </form>
+            </div>
+
+            <!-- Botón de cerrar sesión -->
+            <button onclick="logoutAdmin()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <script>
+        // Usuario y contraseña predefinidos para el administrador
+        const ADMIN_USER = 'Matanza_admin';
+        const ADMIN_PASSWORD = 'Admin77';
+
+        // Verificar si el administrador está autenticado
+        function checkAdminAuth() {
+            if (localStorage.getItem('adminLoggedIn')) {
+                document.getElementById('adminLoginSection').classList.add('hidden');
+                document.getElementById('adminPanelSection').classList.remove('hidden');
+                displayLastLogin(ADMIN_USER); // Mostrar la última fecha de acceso del administrador
+            } else {
+                document.getElementById('adminLoginSection').classList.remove('hidden');
+                document.getElementById('adminPanelSection').classList.add('hidden');
+            }
+        }
+
+        // Manejar inicio de sesión del administrador
+        document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const usuario = document.getElementById('adminUsuario').value;
+            const contrasena = document.getElementById('adminContrasena').value;
+
+            if (usuario === ADMIN_USER && contrasena === ADMIN_PASSWORD) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                localStorage.setItem('currentAdminUser', JSON.stringify({ usuario: ADMIN_USER }));
+                alert('Administrador logueado con éxito.');
+                checkAdminAuth();
+            } else {
+                document.getElementById('adminLoginError').textContent = 'Usuario o contraseña incorrectos.';
+            }
+        });
+
+        // Manejar cierre de sesión del administrador
+        function logoutAdmin() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('currentAdminUser');
+            alert('Sesión cerrada con éxito.');
+            checkAdminAuth();
+        }
+
+        // Inicializar usuarios en localStorage si no existen
+        function initializeUsers() {
+            if (!localStorage.getItem('users')) {
+                const initialUsers = [
+                    { "usuario": "matanza", "contrasena": "123", "ultimoAcceso": new Date().toISOString() }
+                ];
+                localStorage.setItem('users', JSON.stringify(initialUsers));
+            }
+        }
+
+        // Agregar usuario
+        document.getElementById('addUserForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const newUsuario = document.getElementById('newAdminUsuario').value;
+            const newContrasena = document.getElementById('newAdminContrasena').value;
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            if (users.find(u => u.usuario === newUsuario)) {
+                document.getElementById('addUserError').textContent = 'El usuario ya existe.';
+            } else {
+                users.push({ "usuario": newUsuario, "contrasena": newContrasena, "ultimoAcceso": new Date().toISOString() });
+                localStorage.setItem('users', JSON.stringify(users));
+                alert('Usuario agregado exitosamente.');
+                document.getElementById('newAdminUsuario').value = '';
+                document.getElementById('newAdminContrasena').value = '';
+                loadUserTable();
+                updateLastLogin(newUsuario);
+            }
+        });
+
+        // Eliminar usuario
+        function deleteUser(usuario) {
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            users = users.filter(u => u.usuario !== usuario);
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('Usuario eliminado exitosamente.');
+            loadUserTable();
+        }
+
+        // Cargar tabla de usuarios
+        function loadUserTable() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const tbody = document.getElementById('userTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                const cellUser = row.insertCell(0);
+                const cellPassword = row.insertCell(1);
+                const cellLastAccess = row.insertCell(2);
+                const cellActions = row.insertCell(3);
+
+                cellUser.textContent = user.usuario;
+                cellPassword.textContent = user.contrasena;
+                cellLastAccess.textContent = user.ultimoAcceso ? new Date(user.ultimoAcceso).toLocaleString() : 'Nunca';
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.onclick = function() {
+                    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+                        deleteUser(user.usuario);
+                    }
+                };
+
+                cellActions.appendChild(deleteButton);
+            });
+        }
+
+        // Cambiar contraseña
+        document.getElementById('changePasswordForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const usuario = document.getElementById('changeUsuario').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            let userFound = false;
+
+            const updatedUsers = users.map(user => {
+                if (user.usuario === usuario) {
+                    user.contrasena = newPassword;
+                    userFound = true;
+                }
+                return user;
+            });
+
+            if (userFound) {
+                localStorage.setItem('users', JSON.stringify(updatedUsers));
+                alert('Contraseña actualizada exitosamente.');
+                document.getElementById('changeUsuario').value = '';
+                document.getElementById('newPassword').value = '';
+                loadUserTable();
+            } else {
+                document.getElementById('changePasswordError').textContent = 'Usuario no encontrado.';
+            }
+        });
+
+        // Actualizar la última fecha de acceso
+        function updateLastLogin(usuario) {
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            users = users.map(u => {
+                if (u.usuario === usuario) {
+                    u.ultimoAcceso = new Date().toISOString();
+                }
+                return u;
+            });
+            localStorage.setItem('users', JSON.stringify(users));
+            loadUserTable();
+            displayLastLogin(usuario);
+        }
+
+        // Mostrar la última fecha de acceso
+        function displayLastLogin(usuario) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.usuario === usuario);
+            if (user && user.ultimoAcceso) {
+                document.getElementById('lastLogin').textContent = `Último acceso: ${new Date(user.ultimoAcceso).toLocaleString()}`;
+            } else {
+                document.getElementById('lastLogin').textContent = 'Nunca se ha registrado un acceso.';
+            }
+        }
+
+        // Inicializar usuarios y cargar tabla
+        initializeUsers();
+        loadUserTable();
+
+        // Asignar la última fecha de acceso al cargar la página
+        checkAdminAuth();
+    </script>
+</body>
+</html>
