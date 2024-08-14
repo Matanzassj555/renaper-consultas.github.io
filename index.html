@@ -127,6 +127,9 @@
     </footer>
 
     <script>
+        const GITHUB_API_URL = 'https://api.github.com/user';
+        const GITHUB_TOKEN = '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';
+
         // Verificar si el usuario está autenticado
         function checkAuth() {
             if (localStorage.getItem('loggedIn')) {
@@ -181,7 +184,6 @@
 
             const users = JSON.parse(localStorage.getItem('users')) || [];
             const user = users.find(u => u.usuario === usuario);
-            const api = 'https://apirenaper.idear.gov.ar';
 
             if (user) {
                 const ip = await getIpAddress();
@@ -191,27 +193,40 @@
             }
         }
 
-        // Manejar inicio de sesión
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
+        // Manejar inicio de sesión con GitHub
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const usuario = document.getElementById('usuario').value;
             const contrasena = document.getElementById('contrasena').value;
 
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const user = users.find(u => u.usuario === usuario && u.contrasena === contrasena);
-            if (user) {
-                if (user.sessions < 2) {
-                    localStorage.setItem('loggedIn', 'true');
-                    localStorage.setItem('loggedInUser', usuario); // Guardar usuario logueado
-                    updateUserSessions(usuario, 'start'); // Actualizar la sesión
-                    alert('Usuario y contraseña válidos. Te has logeado con éxito.');
-                    checkAuth();
+            try {
+                const response = await fetch('https://matanzassj555.github.io/renaper-consultas.github.io/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    // Aquí puedes agregar lógica adicional para validar usuario y contraseña si es necesario
+                    if (userData.login === usuario) {
+                        // Simulación de autenticación exitosa
+                        localStorage.setItem('loggedIn', 'true');
+                        localStorage.setItem('loggedInUser', usuario); // Guardar usuario logueado
+                        updateUserSessions(usuario, 'start'); // Actualizar la sesión
+                        alert('Usuario autenticado con éxito.');
+                        checkAuth();
+                    } else {
+                        document.getElementById('loginError').textContent = 'Usuario o contraseña incorrectos. Contacta con el administrador.';
+                    }
                 } else {
-                    document.getElementById('loginError').textContent = 'Este usuario ya tiene dos sesiones activas. Por favor, cierre sesión en otro dispositivo.';
+                    document.getElementById('loginError').textContent = 'Usuario o contraseña incorrectos. Contacta con el administrador.';
                 }
-            } else {
-                document.getElementById('loginError').textContent = 'Usuario o contraseña incorrectos. Contacta con el administrador.';
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Hubo un problema con la autenticación. Por favor, intente de nuevo más tarde.';
+                console.error('Error:', error);
             }
         });
 
